@@ -14,13 +14,13 @@
 
 ```mermaid
 flowchart TD
-  A[ユーザー入力: クエリ] --> B[クエリ埋め込み生成\nLambda→Bedrock(action=embed)]
-  B --> C[ベクトル検索(pgvector)\nchunks.embedding に対し KNN]
-  C --> D[ドキュメント単位で重複除去\nROW_NUMBER rn=1]
-  D --> E[プロンプト生成\nsystem + user(context #1..#K)]
-  E --> F[生成API呼出\nLambda→Bedrock(action=generate, JSON応答)]
-  F --> G[応答(JSON)返却\n{"ok":true,"answer":"…","contexts":[…]}]
-  F --> H[推薦ログ保存(rec_logs)\nquery, candidates, response]
+  A[ユーザー入力: クエリ] --> B[クエリ埋め込み生成<br/>Lambda→Bedrock(action=embed)]
+  B --> C[ベクトル検索(pgvector)<br/>chunks.embedding に対し KNN]
+  C --> D[ドキュメント単位で重複除去<br/>ROW_NUMBER rn=1]
+  D --> E[プロンプト生成<br/>system + user(context #1..#K)]
+  E --> F[生成API呼出<br/>Lambda→Bedrock(action=generate, JSON応答)]
+  F --> G[応答(JSON)返却]
+  F --> H[推薦ログ保存(rec_logs)]
 
   subgraph FastAPI
     A
@@ -31,7 +31,7 @@ flowchart TD
     H
   end
 
-  subgraph Lambda(Bedrock Proxy)
+  subgraph Lambda_Proxy
     B
     F
   end
@@ -45,9 +45,9 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  X[beansテーブル] --> Y[論理ドキュメント生成\nタイトル/説明/フレーバー等を結合]
+  X[beansテーブル] --> Y[論理ドキュメント生成<br/>タイトル/説明/フレーバー等を結合]
   Y --> Z[chunkText(最大800文字)]
-  Z --> E1[各チャンクをembed\nLambda→Bedrock(action=embed)]
+  Z --> E1[各チャンクをembed<br/>Lambda→Bedrock(action=embed)]
   E1 --> I[documents/chunksへINSERT]
 ```
 
@@ -135,4 +135,3 @@ ANALYZE chunks;
 ---
 
 必要に応じて、再ランキング（フレーバーノートに基づく加点）や、プロンプト制約強化（コンテキスト外の記述禁止）なども提案できます。
-
