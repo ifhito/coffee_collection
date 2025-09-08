@@ -40,3 +40,29 @@ supabase/.cache/
 supabase/.env
 supabase/types/
 
+# Python (FastAPI experiments)
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.python-version
+.venv/
+venv/
+env/
+
+# Terraform (infra state / local cache)
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/*.tfstate.backup
+**/crash.log
+**/crash.*.log
+
+# Lambda build artifacts (zip bundles)
+**/infra/**/lambda*.zip
+**/infra/**/dist/*.zip
