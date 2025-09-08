@@ -1,14 +1,12 @@
 # Terraform スケルトン（POC）
 
-このフォルダは RDS(PostgreSQL) と最小限のネットワークリソース/IAM、Bedrock 呼び出し用 Lambda/API Gateway、Bedrock ログ設定を Terraform で構築するためのコードです。
+このフォルダは、Bedrock 呼び出し用の Lambda/API Gateway と Bedrock ログ設定のみを Terraform で構築する最小構成です（RDS/VPC は含みません）。
 
 注意
 - 実際のプロビジョニングは未実装です。`main.tf` に必要なリソースを順次追加してください。
 - DB 認証情報は AWS Secrets Manager or SSM Parameter Store を利用してください。
 
 想定リソース
-- VPC / Public Subnets / Internet Gateway / Route Table
-- RDS PostgreSQL (db.t3.micro, Publicly Accessible: true — POC用途)
 - IAM（Lambda 実行ロール + Bedrock Invoke 権限）
 - Lambda（Bedrock プロキシ）+ API Gateway（HTTP API `/invoke`）
 - Bedrock モデル呼び出しログの S3 設定
@@ -20,8 +18,6 @@
 入力変数例（`dev.tfvars`）
 ```
 aws_region               = "ap-northeast-1"
-allowlist_cidr           = "YOUR.IP.ADDR.1/32" # RDS への接続元
-db_password              = "your-strong-password"
 # オンデマンドで使えるモデルの例（Haiku）。Sonnet等は inference profile が必要。
 bedrock_generation_model_id = "anthropic.claude-3-haiku-20240307-v1:0"
 bedrock_embedding_model_id  = "amazon.titan-embed-text-v1"
@@ -37,7 +33,6 @@ terraform apply -var-file=dev.tfvars
 ```
 
 出力
-- `rds_endpoint`, `rds_port`: RDS 接続先
 - `api_invoke_url` + `/invoke`: Bedrock プロキシのエンドポイント
 - `logs_bucket`: Bedrock 呼び出しログの S3 バケット
 

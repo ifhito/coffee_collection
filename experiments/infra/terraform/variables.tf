@@ -9,41 +9,6 @@ variable "project" {
   default     = "bedrock-rag-coffee"
 }
 
-variable "vpc_cidr" {
-  type    = string
-  default = "10.20.0.0/16"
-}
-
-variable "public_subnet_cidrs" {
-  type    = list(string)
-  default = ["10.20.10.0/24", "10.20.11.0/24"]
-}
-
-variable "allowlist_cidr" {
-  type        = string
-  description = "CIDR allowed to access RDS (POC). Use your IP/32."
-}
-
-variable "db_instance_class" {
-  type    = string
-  default = "db.t3.micro"
-}
-
-variable "db_name" {
-  type    = string
-  default = "coffee_rag"
-}
-
-variable "db_username" {
-  type    = string
-  default = "postgres"
-}
-
-variable "db_password" {
-  type      = string
-  sensitive = true
-}
-
 variable "bedrock_generation_model_id" {
   type        = string
   description = "Claude model id"
