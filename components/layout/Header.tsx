@@ -1,26 +1,17 @@
 export function Header() {
   return (
-    <header className="border-b bg-card">
-      <div className="container mx-auto px-4">
-        <div className="flex h-14 items-center gap-3">
-          {/* simple inline coffee icon */}
-          <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            className="size-6 text-primary"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 8h13a4 4 0 0 1 0 8H7a4 4 0 0 1-4-4V8z" />
-            <path d="M16 8h3a3 3 0 0 1 0 6h-3" />
-            <path d="M5 22h10" />
-            <path d="M9 2v2" />
-            <path d="M13 2v2" />
-          </svg>
-          <h1 className="text-xl font-medium tracking-tight">コーヒー豆管理</h1>
+    <header className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-b border-amber-200/50 shadow-sm">
+      <div className="container mx-auto px-6 py-6">
+        <div className="flex h-48 items-center gap-8">
+          {/* Enhanced coffee icon */}
+          <span style={{ fontSize: '3rem' }} role="img" aria-label="coffee">☕</span>
+
+          {/* Enhanced title with gradient text */}
+          <div className="flex flex-col">
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#92400e', letterSpacing: '-0.025em' }}>
+              Coffee Collection
+            </h1>
+          </div>
         </div>
       </div>
     </header>

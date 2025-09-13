@@ -9,7 +9,7 @@ export function TabNav() {
 
   const tabs: Tab[] = [
     { id: 'dashboard', href: '/', label: 'ダッシュボード', icon: '📊' },
-    { id: 'beans', href: '/beans', label: '豆一覧', icon: '☕' },
+    { id: 'beans', href: '/beans', label: '豆一覧', icon: '🫘' },
     { id: 'viz', href: '/viz', label: '可視化', icon: '🔍' },
   ]
 

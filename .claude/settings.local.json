@@ -35,7 +35,8 @@
       "Bash(python3 scripts/final_rating_fix.py)",
       "Bash(python3 scripts/fix_ratings_final.py)",
       "Bash(sed -n '82,91p' scripts/import-notion-all.sql)",
-      "Bash(python3 scripts/regenerate-sql-from-csv.py)"
+      "Bash(python3 scripts/regenerate-sql-from-csv.py)",
+      "Bash(npm run dev)"
     ],
     "deny": [],
     "ask": []
