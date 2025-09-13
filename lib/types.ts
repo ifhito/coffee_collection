@@ -1,6 +1,8 @@
+import type { RoastLevel, ProcessMethod } from './constants'
+
 export type UUID = string
 
-export type Score1to5 = 1|2|3|4|5
+export type Score1to10 = 1|2|3|4|5|6|7|8|9|10
 
 export interface Shop {
   id: UUID
@@ -18,14 +20,15 @@ export interface BeanBatch {
   id: UUID
   user_id: UUID
   name: string
-  roaster?: string | null
-  roast_level?: string | null
+  // Roaster information replaced with shop reference
+  roaster_shop_id?: UUID | null
+  roast_level?: RoastLevel | null
   roast_date?: string | null
   origin_country?: string | null
   origin_region?: string | null
   farm?: string | null
   variety?: string | null
-  process?: string | null
+  process?: ProcessMethod | null
   purchase_shop_id?: UUID | null
   purchase_date?: string | null
   price?: number | null
@@ -34,40 +37,40 @@ export interface BeanBatch {
   notes?: string | null
   archived: boolean
   tags?: string[] | null
+  // Integrated tasting information (1:1 relationship)
+  liking?: Score1to10 | null
+  aroma?: Score1to10 | null
+  sourness?: Score1to10 | null
+  bitterness?: Score1to10 | null
+  sweetness?: Score1to10 | null
+  body?: Score1to10 | null
+  aftertaste?: Score1to10 | null
+  tasting_comment?: string | null
+  tasting_photos?: string[] | null
+  tasted_at?: string | null
   created_at: string
   updated_at: string
 }
 
-export interface Brew {
+// Note: Brew interface removed as brews table is not needed
+
+// Normalized flavor notes interface (proper RDB design)
+export interface FlavorNote {
   id: UUID
   user_id: UUID
   bean_batch_id: UUID
-  method: string
-  dose_g?: number | null
-  grind?: string | null
-  water_g?: number | null
-  temperature_c?: number | null
-  time_sec?: number | null
-  agitation?: string | null
-  equipment?: string[] | null
-  date: string
+  note: string
+  ordinal: number
   created_at: string
 }
 
-export interface Tasting {
+// Bean origins interface (for blends with multiple origins)
+export interface BeanOrigin {
   id: UUID
   user_id: UUID
-  brew_id: UUID
-  liking: Score1to5
-  aroma: Score1to5
-  sourness: Score1to5
-  bitterness: Score1to5
-  sweetness?: Score1to5 | null
-  body?: Score1to5 | null
-  aftertaste?: Score1to5 | null
-  flavor_notes?: string[] | null
-  comment?: string | null
-  photos?: string[] | null
+  bean_batch_id: UUID
+  origin: string
+  ordinal: number
   created_at: string
 }
 
@@ -79,4 +82,3 @@ export interface InventoryLog {
   reason: 'brew'|'adjust'|'other'
   at: string
 }
-

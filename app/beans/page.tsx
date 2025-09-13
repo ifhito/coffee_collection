@@ -1,115 +1,216 @@
 "use client"
-import { useEffect, useMemo, useState } from "react"
-import { supabase } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
+import { beansAPI, authAPI, APIError } from "@/lib/api"
 import type { BeanBatch } from "@/lib/types"
+import Link from "next/link"
 
-export default function BeansPage() {
-  const [userId, setUserId] = useState<string | null>(null)
-  const [beans, setBeans] = useState<BeanBatch[]>([])
+export default function ManageBeansPage() {
+  const [activeBeans, setActiveBeans] = useState<BeanBatch[]>([])
+  const [finishedBeans, setFinishedBeans] = useState<BeanBatch[]>([])
   const [error, setError] = useState<string>("")
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
-    name: "",
-    roaster: "",
-    roast_level: "",
-    initial_weight_g: "",
-    roast_date: "",
-  })
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const uid = data.user?.id ?? null
-      setUserId(uid)
-      if (uid) loadBeans()
-      setLoading(false)
-    })
+    checkAuthStatus()
+    loadBeans()
   }, [])
 
-  async function loadBeans() {
-    const { data, error } = await supabase
-      .from("bean_batches")
-      .select("*")
-      .eq("archived", false)
-      .order("updated_at", { ascending: false })
-      .limit(100)
-    if (error) setError(error.message)
-    else setBeans((data as BeanBatch[]) || [])
-  }
-
-  async function addBean(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-    if (!userId) return
-    const name = form.name.trim()
-    if (!name) { setError("名称は必須です"); return }
-    const initial = form.initial_weight_g ? Number(form.initial_weight_g) : null
-    const row = {
-      user_id: userId,
-      name,
-      roaster: form.roaster?.trim() || null,
-      roast_level: form.roast_level?.trim() || null,
-      roast_date: form.roast_date || null,
-      initial_weight_g: initial,
-      current_weight_g: initial,
+  const checkAuthStatus = async () => {
+    try {
+      const { user } = await authAPI.getUser()
+      setIsLoggedIn(!!user)
+    } catch (err) {
+      setIsLoggedIn(false)
     }
-    const { error } = await supabase.from("bean_batches").insert(row)
-    if (error) setError(error.message)
-    else { setForm({ name: "", roaster: "", roast_level: "", initial_weight_g: "", roast_date: "" }); loadBeans() }
   }
 
-  async function archiveBean(id: string) {
-    const { error } = await supabase.from("bean_batches").update({ archived: true }).eq("id", id)
-    if (error) setError(error.message)
-    else setBeans(beans.filter(b => b.id !== id))
+  async function loadBeans() {
+    try {
+      setLoading(true)
+      const [activeBeans, finishedBeans] = await Promise.all([
+        beansAPI.getAll({ archived: false, limit: 100 }),
+        beansAPI.getAll({ archived: true, limit: 100 })
+      ])
+
+      setActiveBeans(activeBeans || [])
+      setFinishedBeans(finishedBeans || [])
+    } catch (err) {
+      // 認証エラーの場合でもデータを表示するため、エラーをログに記録するだけ
+      console.error('豆データの読み込みエラー:', err)
+      if (err instanceof APIError && err.status !== 401) {
+        setError(err.message)
+      } else if (!(err instanceof APIError)) {
+        setError('データの読み込み中にエラーが発生しました')
+      }
+      // 401エラー（認証エラー）の場合はエラーメッセージを表示しない
+    } finally {
+      setLoading(false)
+    }
   }
 
-  async function adjustWeight(id: string, delta: number) {
-    const bean = beans.find(b => b.id === id)
+  function startFinishFlow(id: string) {
+    // 飲み終わりフローでテイスティング画面に遷移
+    window.location.href = `/tastings/new?bean=${id}&finish=true`
+  }
+
+  async function restoreBean(id: string) {
+    try {
+      await beansAPI.update(id, { archived: false })
+      const bean = finishedBeans.find(b => b.id === id)
+      if (bean) {
+        setFinishedBeans(finishedBeans.filter(b => b.id !== id))
+        setActiveBeans([{ ...bean, archived: false }, ...activeBeans])
+      }
+    } catch (err) {
+      if (err instanceof APIError) {
+        setError(err.message)
+      } else {
+        setError('更新に失敗しました')
+      }
+    }
+  }
+
+
+  async function deleteBean(id: string) {
+    const bean = [...activeBeans, ...finishedBeans].find(b => b.id === id)
     if (!bean) return
-    const next = (bean.current_weight_g ?? 0) + delta
-    const { error } = await supabase.from("bean_batches").update({ current_weight_g: next }).eq("id", id)
-    if (error) setError(error.message)
-    else setBeans(beans.map(b => b.id === id ? { ...b, current_weight_g: next } : b))
+    if (!confirm(`「${bean.name}」を完全に削除しますか？この操作は取り消せません。`)) return
+
+    try {
+      await beansAPI.delete(id)
+      // UIから削除
+      setActiveBeans(activeBeans.filter(b => b.id !== id))
+      setFinishedBeans(finishedBeans.filter(b => b.id !== id))
+    } catch (err) {
+      if (err instanceof APIError) {
+        setError(`削除に失敗しました: ${err.message}`)
+      } else {
+        setError('削除に失敗しました')
+      }
+    }
   }
 
-  if (loading) return <p>読み込み中...</p>
-  if (!userId) return <p><a href="/">サインイン</a>してください。</p>
+  if (loading) return <p className="text-muted-foreground">読み込み中...</p>
 
-  return (
-    <div>
-      <h1>豆一覧</h1>
-      <form onSubmit={addBean} style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
-        <input placeholder="名称（必須）" value={form.name} onChange={(e)=>setForm({ ...form, name: e.target.value })} />
-        <input placeholder="ロースター（任意）" value={form.roaster} onChange={(e)=>setForm({ ...form, roaster: e.target.value })} />
-        <input placeholder="焙煎度（例: 浅/中/深）" value={form.roast_level} onChange={(e)=>setForm({ ...form, roast_level: e.target.value })} />
-        <label>初期量[g]: <input type="number" inputMode="numeric" value={form.initial_weight_g} onChange={(e)=>setForm({ ...form, initial_weight_g: e.target.value })} /></label>
-        <label>焙煎日: <input type="date" value={form.roast_date} onChange={(e)=>setForm({ ...form, roast_date: e.target.value })} /></label>
-        <button>追加</button>
-        {error && <div style={{ color: 'crimson' }}>{error}</div>}
-      </form>
-
-      <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 10 }}>
+  const BeansManageList = ({ beans, title, emptyMessage, isActive }: {
+    beans: BeanBatch[],
+    title: string,
+    emptyMessage: string,
+    isActive: boolean
+  }) => (
+    <div className="space-y-4">
+      <h2 className="text-lg font-medium">{title} ({beans.length}件)</h2>
+      <ul className="grid gap-2">
         {beans.map(b => (
-          <li key={b.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{b.name}</div>
-                <div style={{ fontSize: 12, color: '#666' }}>{b.roaster || ''} {b.roast_level ? `・${b.roast_level}` : ''}</div>
+          <li key={b.id} className="relative rounded-lg border p-3 overflow-hidden">
+            <Link href={`/beans/${b.id}`} aria-label={`${b.name}の詳細`} className="absolute inset-0 rounded-lg block z-10" />
+            <div className="relative z-0">
+              <div className="font-medium mb-2">{b.name}</div>
+              <div className="text-xs text-muted-foreground mb-1">
+                {[b.roast_level].filter(Boolean).join(' ・ ')}
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div>在庫: {b.current_weight_g ?? 0} g</div>
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 6 }}>
-                  <button type="button" onClick={()=>adjustWeight(b.id, 10)}>+10</button>
-                  <button type="button" onClick={()=>adjustWeight(b.id, -10)}>-10</button>
-                  <button type="button" onClick={()=>archiveBean(b.id)} style={{ color: '#a00' }}>アーカイブ</button>
+              {!isActive && (
+                <div className="text-xs text-orange-600 font-medium mb-2">
+                  飲み終わった
+                </div>
+              )}
+              <div className="flex items-end justify-between">
+                <div className="text-sm text-muted-foreground">
+                  在庫: {b.current_weight_g ?? 0} g
+                </div>
+                <div className="flex gap-2 items-center relative z-20">
+                  {isLoggedIn && (
+                    <>
+                      {/* Edit button */}
+                      <Link
+                        href={`/beans/${b.id}/edit`}
+                        title="編集"
+                        aria-label="編集"
+                        className="inline-flex items-center justify-center h-11 w-11 rounded-full text-muted-foreground hover:bg-accent/40 hover:text-accent-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-colors"
+                      >
+                        <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" className="transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </Link>
+                      {/* Finish/Restore button */}
+                      <button
+                        onClick={(e)=>{ e.preventDefault(); isActive ? startFinishFlow(b.id) : restoreBean(b.id) }}
+                        title={isActive ? "飲み終わった" : "復元"}
+                        aria-label={isActive ? "飲み終わった" : "復元"}
+                        className="inline-flex items-center justify-center h-11 w-11 rounded-full text-muted-foreground hover:bg-accent/40 hover:text-accent-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-colors"
+                      >
+                        {isActive ? (
+                          <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" className="transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <path d="M3 7l3-3h12l3 3"/>
+                            <path d="M10 12h4"/>
+                          </svg>
+                        ) : (
+                          <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" className="transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <path d="M3 7l3-3h12l3 3"/>
+                            <path d="M14 12l-4 0"/>
+                            <path d="M12 10l0 4"/>
+                          </svg>
+                        )}
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        onClick={(e)=>{ e.preventDefault(); deleteBean(b.id) }}
+                        title="削除"
+                        aria-label="削除"
+                        className="inline-flex items-center justify-center h-11 w-11 rounded-full text-destructive hover:bg-destructive/10 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-colors"
+                      >
+                        <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" className="transition-colors" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3,6 5,6 21,6"/>
+                          <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </li>
         ))}
-        {beans.length === 0 && <li style={{ color: '#666' }}>まだ登録がありません。</li>}
+        {beans.length === 0 && <li className="text-muted-foreground">{emptyMessage}</li>}
       </ul>
     </div>
   )
-}
 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">豆一覧</h1>
+        {isLoggedIn && (
+          <Link
+            href="/beans/add"
+            className="inline-flex items-center justify-center h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            豆を追加
+          </Link>
+        )}
+      </div>
+
+      {error && <div className="text-sm text-destructive">{error}</div>}
+
+      <BeansManageList
+        beans={activeBeans}
+        title="現在飲んでいる豆"
+        emptyMessage="まだ豆が登録されていません。"
+        isActive={true}
+      />
+
+      <BeansManageList
+        beans={finishedBeans}
+        title="飲み終わった豆"
+        emptyMessage="飲み終わった豆はありません。"
+        isActive={false}
+      />
+    </div>
+  )
+}
