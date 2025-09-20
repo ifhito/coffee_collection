@@ -34,13 +34,19 @@ IMPORT_USER_ID=your_user_id_here
 npm install
 ```
 
-### 3. Supabaseスキーマのセットアップ
+### 3. データベースマイグレーション（Prisma）
 
-Supabaseプロジェクトで以下のmigrationを実行：
+Prisma を利用して Supabase（PostgreSQL）のスキーマを適用します。
 
-```sql
--- supabase/migrations/20250101000000_initial_setup.sql をSQL Editorで実行
+1. `.env.local` に `DATABASE_URL` を設定（ローカル Supabase の場合は `postgresql://postgres:postgres@127.0.0.1:54322/postgres`）。
+2. Supabase ローカルを起動済みでない場合は `supabase start` などで立ち上げる。
+3. Prisma マイグレーションを適用：
+
+```bash
+npm run prisma:migrate:deploy
 ```
+
+マイグレーションファイルは `prisma/migrations/` 配下で管理されます。新しいテーブル追加などの際は Prisma を介してマイグレーションを作成してください。
 
 ### 4. 開発サーバーの起動
 
@@ -65,6 +71,7 @@ npm run import-notion
 - **Frontend**: Next.js 14, React, TypeScript
 - **Backend**: Next.js API Routes, Supabase
 - **Database**: PostgreSQL (Supabase)
+- **Schema Management**: Prisma
 - **Authentication**: Supabase Auth
 - **Styling**: Tailwind CSS
 - **Data Visualization**: HTML5 Canvas

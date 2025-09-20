@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Shop {
+  id        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  name      String      @db.Text
+  type      String      @db.Text
+  url       String?     @db.Text
+  address   String?     @db.Text
+  memo      String?     @db.Text
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  roasterBeans  BeanBatch[] @relation("RoasterShop")
+  purchaseBeans BeanBatch[] @relation("PurchaseShop")
+
+  @@map("shops")
+  @@index([userId], map: "idx_shops_user")
+}
+
+model BeanBatch {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  name             String       @db.Text
+  roasterShopId    String?      @map("roaster_shop_id") @db.Uuid
+  roastLevel       String?      @map("roast_level") @db.Text
+  roastDate        DateTime?    @map("roast_date") @db.Date
+  originCountry    String?      @map("origin_country") @db.Text
+  farm             String?      @db.Text
+  variety          String?      @db.Text
+  process          String?      @db.Text
+  purchaseShopId   String?      @map("purchase_shop_id") @db.Uuid
+  purchaseDate     DateTime?    @map("purchase_date") @db.Date
+  price            Decimal?     @db.Decimal(65, 30)
+  initialWeightG   Int?         @map("initial_weight_g")
+  currentWeightG   Int?         @map("current_weight_g")
+  notes            String?      @db.Text
+  archived         Boolean      @default(false)
+  tags             String[]     @db.Text
+  liking           Int?         @db.SmallInt
+  aroma            Int?         @db.SmallInt
+  sourness         Int?         @db.SmallInt
+  bitterness       Int?         @db.SmallInt
+  sweetness        Int?         @db.SmallInt
+  body             Int?         @db.SmallInt
+  aftertaste       Int?         @db.SmallInt
+  tastingComment   String?      @map("tasting_comment") @db.Text
+  tastingPhotos    String[]     @map("tasting_photos") @db.Text
+  tastedAt         DateTime?    @map("tasted_at") @db.Timestamptz(6)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  roasterShop   Shop?       @relation("RoasterShop", fields: [roasterShopId], references: [id])
+  purchaseShop  Shop?       @relation("PurchaseShop", fields: [purchaseShopId], references: [id])
+  beanOrigins   BeanOrigin[]
+  flavorNotes   FlavorNote[]
+
+  @@map("bean_batches")
+  @@index([userId], map: "idx_beans_user")
+  @@index([roastDate], map: "idx_beans_roast_date")
+  @@index([liking, aroma, sourness, bitterness], map: "idx_beans_tasting_scores")
+}
+
+model BeanOrigin {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  beanBatchId String   @map("bean_batch_id") @db.Uuid
+  origin     String    @db.Text
+  ordinal    Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  beanBatch BeanBatch @relation(fields: [beanBatchId], references: [id])
+
+  @@map("bean_origins")
+  @@index([userId], map: "idx_bean_origins_user")
+  @@index([beanBatchId], map: "idx_bean_origins_bean")
+}
+
+model FlavorNote {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  beanBatchId String   @map("bean_batch_id") @db.Uuid
+  note       String    @db.Text
+  ordinal    Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  beanBatch BeanBatch @relation(fields: [beanBatchId], references: [id])
+
+  @@map("flavor_notes")
+  @@index([userId], map: "idx_flavor_notes_user")
+  @@index([beanBatchId], map: "idx_flavor_notes_bean")
+}

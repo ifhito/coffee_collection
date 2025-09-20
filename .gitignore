@@ -40,6 +40,9 @@ supabase/.cache/
 supabase/.env
 supabase/types/
 
+# Prisma
+prisma/dev.db
+
 # Python (FastAPI experiments)
 __pycache__/
 *.py[cod]
