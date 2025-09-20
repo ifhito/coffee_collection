@@ -1,0 +1,10 @@
+aws_region = "ap-northeast-1"
+allowlist_cidr = "YOUR.IP.ADDR.1/32"
+db_password = "your-strong-password"
+bedrock_generation_model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+bedrock_embedding_model_id  = "amazon.titan-embed-text-v1"
+
+# 生成モデルを Inference Profile で固定化する場合（例: 東京 ap-northeast-1）
+# Lambda は渡された ARN のリージョンに自動追随するよう実装済みです。
+# 下記はサンプルなので、あなたの ARN に置き換えてください（実際の profileId は profiles API で確認可能）。
+bedrock_generation_inference_profile_arn = "arn:aws:bedrock:ap-northeast-1:010922940107:inference-profile/your-profile-id"
