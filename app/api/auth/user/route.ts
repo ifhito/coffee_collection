@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createSuccessResponse, createErrorResponse } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     console.log('Getting user, headers:', Object.fromEntries(request.headers.entries()))

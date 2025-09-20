@@ -91,7 +91,7 @@ export default function LoginPage() {
           一般ユーザーによるアカウント登録は無効化されています。
         </p>
         <p className="text-xs">
-          管理者にお問い合わせいただくか、Supabase Auth > Users から直接ユーザーを作成してください。
+          管理者にお問い合わせいただくか、Supabase Auth の Users から直接ユーザーを作成してください。
         </p>
       </div>
     </div>

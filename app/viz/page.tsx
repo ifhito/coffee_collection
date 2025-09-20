@@ -1,12 +1,12 @@
 "use client"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { beansAPI, authAPI, APIError } from "@/lib/api"
 import type { BeanBatch } from "@/lib/types"
 import { useSearchParams } from "next/navigation"
 
 // Note: Using bean data with integrated tasting information instead of separate tasting table
 
-export default function VizPage() {
+function VizPageContent() {
   const searchParams = useSearchParams()
   const [userId, setUserId] = useState<string | null>(null)
   const [beans, setBeans] = useState<BeanBatch[]>([])
@@ -231,5 +231,13 @@ export default function VizPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function VizPage() {
+  return (
+    <Suspense fallback={<p className="text-muted-foreground">パラメータ読み込み中...</p>}>
+      <VizPageContent />
+    </Suspense>
   )
 }

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { beansAPI, tastingsAPI, authAPI, APIError } from "@/lib/api"
 import type { BeanBatch, FlavorNote } from "@/lib/types"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -8,7 +8,7 @@ import { TagInput } from "@/components/ui/tag-input"
 
 const scoreOptions = [1,2,3,4,5,6,7,8,9,10]
 
-export default function NewTastingPage() {
+function NewTastingPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [beans, setBeans] = useState<BeanBatch[]>([])
@@ -167,7 +167,7 @@ export default function NewTastingPage() {
         {selectedBean && (
           <div className="text-sm text-muted-foreground">
             対象の豆: {selectedBean.name}
-            {selectedBean.current_weight_g !== null && (
+            {selectedBean.current_weight_g !== null && selectedBean.current_weight_g !== undefined && (
               <span className="ml-2">
                 （残り: {selectedBean.current_weight_g}g）
                 {selectedBean.current_weight_g <= 50 && (
@@ -267,5 +267,13 @@ export default function NewTastingPage() {
         {error && <div className="text-sm text-destructive">{error}</div>}
       </form>
     </div>
+  )
+}
+
+export default function NewTastingPage() {
+  return (
+    <Suspense fallback={<p className="text-muted-foreground">パラメータ読み込み中...</p>}>
+      <NewTastingPageContent />
+    </Suspense>
   )
 }
