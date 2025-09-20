@@ -26,3 +26,8 @@ export const PROCESS_METHODS = [
 // 型定義
 export type RoastLevel = typeof ROAST_LEVELS[number]
 export type ProcessMethod = typeof PROCESS_METHODS[number]
+export const getSupabaseUrl = () => {
+  const useLocal = process.env.SUPABASE_USE_LOCAL === 'true' || process.env.NODE_ENV === 'development'
+  if (useLocal && process.env.NEXT_PUBLIC_SUPABASE_URL_DEV) return process.env.NEXT_PUBLIC_SUPABASE_URL_DEV
+  return process.env.NEXT_PUBLIC_SUPABASE_URL!
+}

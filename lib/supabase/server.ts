@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseUrl } from '@/lib/constants'
 
 // API Route用のクライアント（サーバーサイド）
 export const createAPIClient = () => {
@@ -11,7 +12,7 @@ export const createAPIClient = () => {
   }
 
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl(),
     serviceRoleKey,
     {
       auth: {
