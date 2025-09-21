@@ -106,9 +106,21 @@ export default function ManageBeansPage() {
           <li key={b.id} className="relative rounded-lg border p-3 overflow-hidden">
             <Link href={`/beans/${b.id}`} aria-label={`${b.name}の詳細`} className="absolute inset-0 rounded-lg block z-10" />
             <div className="relative z-0">
-              <div className="font-medium mb-2">{b.name}</div>
-              <div className="text-xs text-muted-foreground mb-1">
-                {[b.roast_level].filter(Boolean).join(' ・ ')}
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex-1">
+                  <div className="font-medium">{b.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {[b.roast_level].filter(Boolean).join(' ・ ')}
+                  </div>
+                  {(b.liking != null || b.aroma != null || b.sourness != null || b.bitterness != null) && (
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {b.liking != null && <span>好き度: ⭐ {b.liking}</span>}
+                      {b.aroma != null && <span>香り: {b.aroma}</span>}
+                      {b.sourness != null && <span>酸味: {b.sourness}</span>}
+                      {b.bitterness != null && <span>苦味: {b.bitterness}</span>}
+                    </div>
+                  )}
+                </div>
               </div>
               {!isActive && (
                 <div className="text-xs text-orange-600 font-medium mb-2">

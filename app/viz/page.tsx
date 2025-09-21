@@ -3,6 +3,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { beansAPI, authAPI, APIError } from "@/lib/api"
 import type { BeanBatch } from "@/lib/types"
 import { useSearchParams } from "next/navigation"
+import { SelectBox } from "@/components/ui/selectbox"
 
 // Note: Using bean data with integrated tasting information instead of separate tasting table
 
@@ -187,38 +188,42 @@ function VizPageContent() {
       <h1 className="text-2xl font-semibold tracking-tight">コンステレーション（簡易）</h1>
       <div className="text-sm text-muted-foreground">好き度が外周ほど大きくなる簡易表示です。</div>
       <div ref={containerRef} className="rounded-xl border bg-card">
-        <div className="px-6 pt-6 space-y-2">
+        <div className="px-6 pt-6 space-y-3">
           {/* デバッグ情報 */}
           <div className="text-xs text-muted-foreground">
             データ: {beansWithTasting.length}件の豆（テイスティング済み） / {beans.length}件の豆全体, 表示中: {drawData.length}件
           </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-            <label className="mr-2 flex items-center gap-2">
-              <span className="text-xs">豆:</span>
-              <select
-                className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                value={beanFilter}
-                onChange={(e)=>setBeanFilter(e.target.value)}
-              >
-                <option value="">すべて</option>
-                {beans.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}{(b as any).archived ? ' [飲み終わった]' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span>凡例:</span>
-            {[2,4,6,8,10].map((lvl) => (
-              <span key={lvl} className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5">
-                <span
-                  aria-hidden
-                  className="inline-block size-2 rounded-full"
-                  style={{ backgroundColor: primaryColor, opacity: 0.6 + lvl * 0.04 }}
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs">豆:</span>
+                <SelectBox
+                  value={beanFilter}
+                  onChange={setBeanFilter}
+                  options={[
+                    { value: "", label: "すべて" },
+                    ...beans.map(b => ({
+                      value: b.id,
+                      label: `${b.name}${(b as any).archived ? ' [飲み終わった]' : ''}`
+                    }))
+                  ]}
+                  placeholder="すべて"
                 />
-                {lvl}
-              </span>
-            ))}
+              </label>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+              <span>凡例:</span>
+              {[2,4,6,8,10].map((lvl) => (
+                <span key={lvl} className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5">
+                  <span
+                    aria-hidden
+                    className="inline-block size-2 rounded-full"
+                    style={{ backgroundColor: primaryColor, opacity: 0.6 + lvl * 0.04 }}
+                  />
+                  {lvl}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
         <div className="px-6 pb-6">

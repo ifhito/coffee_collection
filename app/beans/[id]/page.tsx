@@ -174,7 +174,7 @@ export default function BeanDetailPage() {
         </div>
       </section>
 
-      {isLoggedIn && bean.liking && (
+      {(bean.liking || bean.tasting_comment || flavorNotes.length > 0) && (
         <section className="rounded-xl border bg-card">
           <div className="px-6 pt-6">
             <h2 className="text-base font-medium">テイスティング</h2>
@@ -186,24 +186,24 @@ export default function BeanDetailPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-4 text-sm">
                       <span>好き度: ⭐ {bean.liking}</span>
-                      <span>香り: {bean.aroma}</span>
-                      <span>酸味: {bean.sourness}</span>
-                      <span>苦味: {bean.bitterness}</span>
+                      {bean.aroma != null && <span>香り: {bean.aroma}</span>}
+                      {bean.sourness != null && <span>酸味: {bean.sourness}</span>}
+                      {bean.bitterness != null && <span>苦味: {bean.bitterness}</span>}
                     </div>
-                    {(bean.sweetness || bean.body || bean.aftertaste) && (
+                    {(bean.sweetness != null || bean.body != null || bean.aftertaste != null) && (
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {bean.sweetness && <span>甘み: {bean.sweetness}</span>}
-                        {bean.body && <span>ボディ: {bean.body}</span>}
-                        {bean.aftertaste && <span>後味: {bean.aftertaste}</span>}
+                        {bean.sweetness != null && <span>甘み: {bean.sweetness}</span>}
+                        {bean.body != null && <span>ボディ: {bean.body}</span>}
+                        {bean.aftertaste != null && <span>後味: {bean.aftertaste}</span>}
                       </div>
                     )}
-                    {flavorNotes && flavorNotes.length > 0 && (
+                    {flavorNotes.length > 0 && (
                       <div className="text-sm text-muted-foreground">
                         フレーバー: {flavorNotes.join(', ')}
                       </div>
                     )}
                     {bean.tasting_comment && (
-                      <div className="text-sm">{bean.tasting_comment}</div>
+                      <div className="text-sm whitespace-pre-wrap leading-relaxed">{bean.tasting_comment}</div>
                     )}
                   </div>
                   <div className="text-right text-xs text-muted-foreground">
@@ -213,6 +213,9 @@ export default function BeanDetailPage() {
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">まだテイスティングが記録されていません</div>
+            )}
+            {!isLoggedIn && (
+              <div className="mt-4 text-xs text-muted-foreground">編集する場合はサインインしてください。</div>
             )}
           </div>
         </section>

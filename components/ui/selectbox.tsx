@@ -23,7 +23,8 @@ export function SelectBox({
 }) {
   const btnRef = useRef<HTMLButtonElement | null>(null)
   const [open, setOpen] = useState(false)
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [rect, setRect] = useState<{ top: number; bottom: number; left: number; width: number } | null>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; bottom: number; width: number; maxHeight: number }>({ top: 0, bottom: 0, width: 0, maxHeight: 240 })
 
   const opts = options.map(toOpt)
   const current = opts.find(o => o.value === value)
@@ -32,10 +33,37 @@ export function SelectBox({
     const el = btnRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
-    setRect({ top: r.bottom, left: r.left, width: r.width })
+    setRect({ top: r.top, bottom: r.bottom, left: r.left, width: r.width })
   }
 
   useLayoutEffect(() => { if (open) updateRect() }, [open])
+  useLayoutEffect(() => {
+    if (!open || !rect) return
+
+    const viewportHeight = window.innerHeight
+    const SAFE_MARGIN = 8
+    const MAX_HEIGHT = 260
+
+    const spaceBelow = viewportHeight - rect.bottom - SAFE_MARGIN
+    const spaceAbove = rect.top - SAFE_MARGIN
+    let top = rect.bottom + 4
+    let maxHeight = Math.min(MAX_HEIGHT, spaceBelow)
+
+    if (maxHeight < 120 && spaceAbove > spaceBelow) {
+      const candidate = Math.min(MAX_HEIGHT, spaceAbove)
+      if (candidate > maxHeight) {
+        top = Math.max(SAFE_MARGIN, rect.top - candidate - 4)
+        maxHeight = candidate
+      }
+    }
+
+    if (maxHeight < 120) {
+      maxHeight = Math.max(120, Math.min(MAX_HEIGHT, viewportHeight - SAFE_MARGIN * 2))
+      top = Math.min(Math.max(SAFE_MARGIN, rect.bottom + 4), viewportHeight - maxHeight - SAFE_MARGIN)
+    }
+
+    setDropdownPos({ top, bottom: top + maxHeight, width: rect.width, maxHeight })
+  }, [open, rect])
   useEffect(() => {
     if (!open) return
     const onScroll = () => updateRect()
@@ -77,8 +105,13 @@ export function SelectBox({
       {open && rect && (
         <div
           role="listbox"
-          className="fixed z-50 max-h-60 overflow-auto rounded-md border bg-card shadow-md"
-          style={{ top: rect.top + 4, left: rect.left, width: rect.width }}
+          className="fixed z-50 overflow-auto rounded-md border bg-card shadow-md"
+          style={{
+            top: dropdownPos.top,
+            left: Math.max(8, Math.min(rect.left, window.innerWidth - dropdownPos.width - 8)),
+            width: dropdownPos.width,
+            maxHeight: dropdownPos.maxHeight
+          }}
         >
           {opts.length === 0 && (
             <div className="px-3 py-2 text-sm text-muted-foreground">候補がありません</div>
@@ -102,4 +135,3 @@ export function SelectBox({
     </>
   )
 }
-
