@@ -50,41 +50,59 @@ function NewTastingPageContent() {
       setIsFinishFlow(true)
     }
 
-    if (q && beans.length > 0) {
-      const bean = beans.find(b => b.id === q)
-      if (bean) {
-        setSelectedBean(bean)
-        setForm(prev => ({ ...prev, bean_batch_id: q }))
+    if (!q) return
 
-        // Load existing tasting data if available (but not for finish flow)
-        if (bean.liking && !isFinishFlow) {
-          setIsEditMode(true)
-          setForm({
-            bean_batch_id: q,
-            liking: bean.liking,
-            aroma: bean.aroma || 6,
-            sourness: bean.sourness || 5,
-            bitterness: bean.bitterness || 4,
-            sweetness: bean.sweetness || 5,
-            body: bean.body || 5,
-            aftertaste: bean.aftertaste || 5,
-            comment: bean.tasting_comment || ""
-          })
+    const ensureBean = async () => {
+      const existing = beans.find(b => b.id === q)
+      if (existing) {
+        applyBeanSelection(existing)
+        return
+      }
 
-          // Load flavor notes from API
-          ;(async () => {
-            try {
-              const beanData = await beansAPI.getById(q)
-              setTags(beanData.flavorNotes || [])
-            } catch (err) {
-              console.error('Failed to load flavor notes:', err)
-            }
-          })()
-        }
+      try {
+        const beanData = await beansAPI.getById(q)
+        setBeans(prev => {
+          if (prev.some(b => b.id === beanData.id)) return prev
+          return [beanData, ...prev]
+        })
+        applyBeanSelection(beanData)
+      } catch (err) {
+        console.error('Failed to fetch bean for tasting edit:', err)
       }
     }
+
+    ensureBean()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beans])
+  }, [beans.length])
+
+  const applyBeanSelection = (bean: BeanBatch) => {
+    setSelectedBean(bean)
+    setForm(prev => ({ ...prev, bean_batch_id: bean.id }))
+
+    if (bean.liking && !isFinishFlow) {
+      setIsEditMode(true)
+      setForm({
+        bean_batch_id: bean.id,
+        liking: bean.liking,
+        aroma: bean.aroma || 6,
+        sourness: bean.sourness || 5,
+        bitterness: bean.bitterness || 4,
+        sweetness: bean.sweetness || 5,
+        body: bean.body || 5,
+        aftertaste: bean.aftertaste || 5,
+        comment: bean.tasting_comment || ""
+      })
+
+      ;(async () => {
+        try {
+          const beanData = await beansAPI.getById(bean.id)
+          setTags(beanData.flavorNotes || [])
+        } catch (err) {
+          console.error('Failed to load flavor notes:', err)
+        }
+      })()
+    }
+  }
 
   async function load() {
     try {
@@ -128,8 +146,8 @@ function NewTastingPageContent() {
         try {
           await beansAPI.update(selectedBean.id, { archived: true })
           alert('テイスティングを記録し、豆を飲み終わりとして登録しました')
-          // 豆一覧ページに戻る
-          router.push('/beans')
+          // 豆詳細ページに戻る
+          router.push(`/beans/${selectedBean.id}`)
           return
         } catch (err) {
           console.error('Archive failed:', err)
@@ -139,7 +157,12 @@ function NewTastingPageContent() {
         alert(isEditMode ? 'テイスティング情報を更新しました' : 'テイスティングを記録しました')
       }
 
-      // Refresh the data
+      if (selectedBean || form.bean_batch_id) {
+        router.push(`/beans/${selectedBean?.id || form.bean_batch_id}`)
+        return
+      }
+
+      // Refresh fallback
       load()
     } catch (err) {
       if (err instanceof APIError) {

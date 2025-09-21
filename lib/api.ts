@@ -160,6 +160,12 @@ export const tastingsAPI = {
       body: JSON.stringify(data),
     })
   },
+  remove: (beanId: string) => {
+    return apiRequest<{ message: string }>('/tastings', {
+      method: 'DELETE',
+      body: JSON.stringify({ bean_batch_id: beanId }),
+    })
+  },
 }
 
 // Auth API

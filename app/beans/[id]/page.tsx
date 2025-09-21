@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { beansAPI, authAPI, APIError } from "@/lib/api"
+import { beansAPI, authAPI, APIError, tastingsAPI } from "@/lib/api"
 import type { BeanBatch, Shop } from "@/lib/types"
 
 export default function BeanDetailPage() {
@@ -17,6 +17,7 @@ export default function BeanDetailPage() {
   const [roasterShop, setRoasterShop] = useState<Shop | null>(null)
   const [purchaseShop, setPurchaseShop] = useState<Shop | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [actionMessage, setActionMessage] = useState<string>("")
 
   useEffect(() => {
     if (!id) return
@@ -51,6 +52,33 @@ export default function BeanDetailPage() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const hasTastingData = Boolean(
+    bean?.liking || bean?.tasting_comment || flavorNotes.length > 0
+  )
+
+  const startEditTasting = () => {
+    if (!bean) return
+    router.push(`/tastings/new?bean=${bean.id}`)
+  }
+
+  const deleteTasting = async () => {
+    if (!bean) return
+    if (!confirm('テイスティング記録を削除しますか？')) return
+
+    try {
+      await tastingsAPI.remove(bean.id)
+      await loadBeanData()
+      setActionMessage('テイスティング記録を削除しました')
+    } catch (err) {
+      console.error('Failed to delete tasting:', err)
+      if (err instanceof APIError) {
+        setError(err.message)
+      } else {
+        setError('テイスティングの削除に失敗しました')
+      }
     }
   }
 
@@ -174,10 +202,26 @@ export default function BeanDetailPage() {
         </div>
       </section>
 
-      {(bean.liking || bean.tasting_comment || flavorNotes.length > 0) && (
+      {hasTastingData && (
         <section className="rounded-xl border bg-card">
-          <div className="px-6 pt-6">
+          <div className="px-6 pt-6 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-medium">テイスティング</h2>
+            {isLoggedIn && (
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  onClick={startEditTasting}
+                  className="inline-flex items-center justify-center rounded-md border px-3 py-1.5 hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  編集
+                </button>
+                <button
+                  onClick={deleteTasting}
+                  className="inline-flex items-center justify-center rounded-md border border-destructive/40 px-3 py-1.5 text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  削除
+                </button>
+              </div>
+            )}
           </div>
           <div className="px-6 pb-6">
             {bean.liking ? (
@@ -219,6 +263,10 @@ export default function BeanDetailPage() {
             )}
           </div>
         </section>
+      )}
+
+      {actionMessage && (
+        <div className="text-xs text-muted-foreground">{actionMessage}</div>
       )}
 
       <div>

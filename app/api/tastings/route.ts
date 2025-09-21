@@ -91,3 +91,63 @@ export async function POST(request: NextRequest) {
     }
   })
 }
+
+export async function DELETE(request: NextRequest) {
+  return withAuth(request, async (userId, supabase) => {
+    try {
+      const { bean_batch_id } = await request.json()
+
+      if (!bean_batch_id) {
+        return createErrorResponse('bean_batch_id is required')
+      }
+
+      const { data: existingBean, error: checkError } = await supabase
+        .from('bean_batches')
+        .select('id')
+        .eq('id', bean_batch_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (checkError || !existingBean) {
+        return createErrorResponse('Bean not found', 404)
+      }
+
+      const clearData = {
+        liking: null,
+        aroma: null,
+        sourness: null,
+        bitterness: null,
+        sweetness: null,
+        body: null,
+        aftertaste: null,
+        tasting_comment: null,
+        tasted_at: null,
+      }
+
+      const { error: updateError } = await supabase
+        .from('bean_batches')
+        .update(clearData)
+        .eq('id', bean_batch_id)
+        .eq('user_id', userId)
+
+      if (updateError) {
+        return createErrorResponse(updateError.message)
+      }
+
+      const { error: flavorDeleteError } = await supabase
+        .from('flavor_notes')
+        .delete()
+        .eq('bean_batch_id', bean_batch_id)
+        .eq('user_id', userId)
+
+      if (flavorDeleteError) {
+        return createErrorResponse(flavorDeleteError.message)
+      }
+
+      return createSuccessResponse({ message: 'Tasting removed successfully' })
+    } catch (error) {
+      console.error('Error deleting tasting:', error)
+      return createErrorResponse('Failed to delete tasting', 500)
+    }
+  })
+}
