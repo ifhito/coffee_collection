@@ -27,7 +27,13 @@ export const PROCESS_METHODS = [
 export type RoastLevel = typeof ROAST_LEVELS[number]
 export type ProcessMethod = typeof PROCESS_METHODS[number]
 export const getSupabaseUrl = () => {
-  const useLocal = process.env.SUPABASE_USE_LOCAL === 'true' || process.env.NODE_ENV === 'development'
-  if (useLocal && process.env.NEXT_PUBLIC_SUPABASE_URL_DEV) return process.env.NEXT_PUBLIC_SUPABASE_URL_DEV
   return process.env.NEXT_PUBLIC_SUPABASE_URL!
+}
+
+export const getSupabaseAnonKey = () => {
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+}
+
+export const getSupabaseServiceRoleKey = () => {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAnonKey, getSupabaseUrl } from './constants'
 
 export async function withAuth(
   request: NextRequest,
@@ -19,8 +20,8 @@ export async function withAuth(
 
     // ユーザートークンを使用してクライアントを作成
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
       {
         global: {
           headers: {

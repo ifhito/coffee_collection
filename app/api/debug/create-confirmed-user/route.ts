@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseUrl, getSupabaseAnonKey } from '@/lib/constants'
 import { createSuccessResponse, createErrorResponse } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -9,8 +10,8 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      getSupabaseUrl(),
+      getSupabaseAnonKey()
     )
 
     const testEmail = 'confirmed.user@gmail.com'

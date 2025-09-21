@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { withAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth'
-import { createClient } from '@supabase/supabase-js'
-import { getSupabaseUrl } from '@/lib/constants'
+import { createAnonClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       // 認証されていない場合は、公開データを返す（visualization用）
-      const supabase = createClient(getSupabaseUrl(), process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const supabase = createAnonClient()
 
       let query = supabase
         .from('bean_batches')

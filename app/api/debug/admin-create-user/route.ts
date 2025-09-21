@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createSuccessResponse, createErrorResponse } from '@/lib/auth'
+import { getSupabaseUrl, getSupabaseServiceRoleKey } from '@/lib/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +11,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Service Role KeyがあればAdmin APIを使用
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const serviceRoleKey = getSupabaseServiceRoleKey()
+
+    if (serviceRoleKey) {
       const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        getSupabaseUrl(),
+        serviceRoleKey,
         {
           auth: {
             autoRefreshToken: false,

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseUrl, getSupabaseAnonKey } from '@/lib/constants'
 import { createSuccessResponse, createErrorResponse } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -17,12 +18,12 @@ export async function POST(request: NextRequest) {
     console.log('=== MANUAL LOGIN TEST ===')
     console.log('Testing email:', email)
     console.log('Password length:', password.length)
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Anon Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('Supabase URL:', getSupabaseUrl())
+    console.log('Anon Key exists:', !!getSupabaseAnonKey())
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      getSupabaseUrl(),
+      getSupabaseAnonKey()
     )
 
     // 詳細なログ付きでログイン試行

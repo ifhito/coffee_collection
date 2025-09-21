@@ -1,34 +1,63 @@
 import { NextRequest } from 'next/server'
 import { withAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth'
+import { createAnonClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (userId, supabase) => {
-    try {
-      const { searchParams } = new URL(request.url)
-      const type = searchParams.get('type')
+  try {
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type')
+    const authHeader = request.headers.get('Authorization')
 
-      let query = supabase
-        .from('shops')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true })
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return withAuth(request, async (userId, supabase) => {
+        let query = supabase
+          .from('shops')
+          .select('*')
+          .eq('user_id', userId)
+          .order('name', { ascending: true })
 
-      if (type) {
-        query = query.eq('type', type)
-      }
+        if (type) {
+          query = query.eq('type', type)
+        }
 
-      const { data, error } = await query
+        const { data, error } = await query
 
-      if (error) {
-        return createErrorResponse(error.message)
-      }
+        if (error) {
+          return createErrorResponse(error.message)
+        }
 
-      return createSuccessResponse(data)
-    } catch (error) {
-      console.error('Error fetching shops:', error)
-      return createErrorResponse('Failed to fetch shops', 500)
+        return createSuccessResponse(data)
+      })
     }
-  })
+
+    let supabase
+    try {
+      supabase = createAnonClient()
+    } catch (error) {
+      console.error('Failed to create anon client for shops:', error)
+      return createErrorResponse('Supabase anon key is not configured', 500)
+    }
+
+    let query = supabase
+      .from('shops')
+      .select('*')
+      .order('name', { ascending: true })
+
+    if (type) {
+      query = query.eq('type', type)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      return createErrorResponse(error.message)
+    }
+
+    return createSuccessResponse(data)
+  } catch (error) {
+    console.error('Error fetching shops:', error)
+    return createErrorResponse('Failed to fetch shops', 500)
+  }
 }
 
 export async function POST(request: NextRequest) {

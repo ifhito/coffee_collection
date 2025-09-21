@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { withAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth'
+import { createAnonClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
@@ -71,11 +72,13 @@ export async function GET(
       })
     } else {
       // 認証されていない場合は、公開データを返す
-      const { createClient } = await import('@supabase/supabase-js')
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      let supabase
+      try {
+        supabase = createAnonClient()
+      } catch (error) {
+        console.error('Failed to create anon client for bean detail:', error)
+        return createErrorResponse('Supabase anon key is not configured', 500)
+      }
 
       const [
         { data: beanData, error: beanError },

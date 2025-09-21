@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createSuccessResponse, createErrorResponse } from '@/lib/auth'
+import { getSupabaseUrl, getSupabaseAnonKey } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     console.log('Token extracted:', token ? 'exists' : 'missing')
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
       {
         global: {
           headers: {
